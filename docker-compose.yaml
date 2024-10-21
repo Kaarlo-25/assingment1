@@ -1,1 +1,46 @@
-lskdjfl
+#TBC = ToBeCompleted
+
+version: '3.9'
+
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # AMQP protocol port; the number is repeated because the port is being exposed. When this appens, we are more vunerable to attacks
+      - "15672:15672"  # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: test
+    volumes:
+      - mongo:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/test
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  mongo-data:
+    driver: local
+    name: mongo-sdata
