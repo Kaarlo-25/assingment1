@@ -2,7 +2,7 @@ FROM python:3.9
 
 WORKDIR /app
 
-COPY . .
+COPY session-pub.py .
 
 RUN pip install pika
 

@@ -5,7 +5,7 @@ FROM python:3.9
 WORKDIR /app
 
 # Copia los archivos actuales al contenedor
-COPY . .
+COPY session-processor.py .
 
 # Instala las dependencias necesarias
 RUN pip install pika pymongo

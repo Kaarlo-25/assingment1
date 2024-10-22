@@ -2,7 +2,9 @@ version: '3.9'
 
 services:
   session-publisher:
-    build: .
+    build: 
+      context: /root/assingment1/session-sub
+      dockerfile: Dockerfile
     environment:
       NUM_SESSIONS: 10
       SESSION_DELAY: 10
@@ -11,7 +13,9 @@ services:
       - rabbitmq  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
 
   session-processor:
-    build: .
+    build: 
+      context: /root/assingment1/session-processor
+      dockerfile: Dockerfile
     environment:
       AMQP_SERVER: rabbitmq
       MONGO_SERVER: mongodb
@@ -39,6 +43,13 @@ services:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_DATABASE: session_data
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mypassword
+    healthcheck:  # Define un mecanismo de verificación de estado para el contenedor.
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  # Ejecuta un comando de MongoDB que envía un ping para comprobar si la base de datos está disponible.
+      interval: 30s  # Intervalo de tiempo entre cada verificación de estado. 'TBC' indica que se debe definir el tiempo deseado (por ejemplo, '30s' para 30 segundos).
+      timeout: 10s  # Tiempo máximo que se espera para que el comando de verificación responda. Aquí es 10 segundos.
+      retries: 5  
 
   mongo-express:
     image: mongo-express
@@ -47,6 +58,8 @@ services:
       - "8081:8081"
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/session_data
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass123
     depends_on:
       mongodb:
         condition: service_healthy
