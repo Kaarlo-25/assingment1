@@ -1,28 +1,66 @@
+import datetime
+import os
 import pika
 import pymongo
 import json
 
+QUEUE_NAME = 'session_queue'
+AMQP_SERVER = os.getenv('AMQP_SERVER')
+MONGO_SERVER = os.getenv('MONGO_SERVER')
+MONGO_DATABASE = os.getenv('MONGO_DATABASE')
+
 # Connect to MongoDB
-mongo_client = pymongo.MongoClient("mongodb://localhost:27017/") # In the assignement it is necessary to specify the user (root), and the password (password)
-db = mongo_client["test"]
-collection = db["messages"]
+mongo_client = pymongo.MongoClient(f"mongodb://{MONGO_SERVER}:27017/") # In the assignement it is necessary to specify the user (root), and the password (password)
+db = mongo_client[MONGO_DATABASE]
+collection = db["sessions"]
 
 # Connect to RabbitMQ
-rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER))
 channel = rabbitmq_conn.channel()
-channel.queue_declare(queue='message_queue')
+channel.queue_declare(queue=QUEUE_NAME)
+
+ongoing_sessions = {}
 
 # Callback function to handle messages
 def callback(ch, method, properties, body):
     message = json.loads(body)
-    print(f" [x] Received {message}")
+    session_id = message['session_id']
+    event_type = message['event_type']
     
-    # Save the message to MongoDB
-    collection.insert_one(message)
-    print(" [x] Message stored in MongoDB:", message)
+    if event_type == 'session_start':
+        # Store session start info
+        start_time = message['start_time']
+        ongoing_sessions[session_id] = {'start_time': start_time}
+        print(f"Session started: {session_id} at {start_time}")
+    
+    elif event_type == 'session_end':
+        # Check if we have the session start info
+        if session_id in ongoing_sessions:
+            end_time = message['end_time']
+            start_time = ongoing_sessions[session_id]['start_time']
+
+            # Calculate session duration
+            start_dt = datetime.fromisoformat(start_time)
+            end_dt = datetime.fromisoformat(end_time)
+            duration = (end_dt - start_dt).total_seconds()
+
+            # Store the session in MongoDB
+            session_data = {
+                'session_id': session_id,
+                'start_time': start_time,
+                'end_time': end_time,
+                'duration': duration
+            }
+            collection.insert_one(session_data)
+
+            # Remove the session from ongoing_sessions
+            del ongoing_sessions[session_id]
+            print(f"Session ended: {session_id} at {end_time}, duration: {duration} seconds")
+        else:
+            print(f"Received end event for unknown session: {session_id}")
 
 # Consume messages from RabbitMQ
-channel.basic_consume(queue='message_queue', on_message_callback=callback, auto_ack=True)
+channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback, auto_ack=True)
 
-print(' [*] Waiting for messages. To exit press CTRL+C')
+print("Waiting for session messages. To exit, press CTRL+C")
 channel.start_consuming()

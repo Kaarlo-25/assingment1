@@ -6,4 +6,4 @@ COPY . .
 
 RUN pip install pika
 
-CMD ["python", "session_pub.py"]
+CMD ["python", "-u", "session_pub.py"]
