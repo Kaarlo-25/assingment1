@@ -1,18 +1,59 @@
+import datetime
+import os
+import random
+import time
 import pika
 import json
 
-# Connect to RabbitMQ
-rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+QUEUE_NAME = 'session_queue'
+NUM_SESSIONS = int(os.getenv('NUM_SESSIONS'))
+DELAY = int(os.getenv('SESSION_DELAY'))
+AMQP_SERVER = os.getenv('AMQP_SERVER')
+user_ids_used = []
+
+# FUNCTIONS
+def generate_id():
+    session_id = f"session_{datetime.now().strftime('%H:%M:%S')}" 
+    user_id = random.randint(1, 9999)
+    while user_id in user_ids_used:
+        user_id = random.randint(1, 9999)
+    user_ids_used.append(user_id)
+    return session_id, user_id
+
+def publish_message(channel, message):
+    channel.basic_publish(exchange='', routing_key=QUEUE_NAME, body=json.dumps(message))
+    print(f"Published: {message}")
+
+def simulate_session(channel, session_id, user_id):
+    # Start session event
+    start_time = datetime.now().isoformat()
+    start_event = {
+        'event_type': 'session_start',
+        'session_id': session_id,
+        'user_id': user_id,
+        'start_time': start_time
+    }
+    publish_message(channel, start_event)
+    
+    session_duration = random.randint(1, DELAY)
+    time.sleep(session_duration)
+    
+    # End session event
+    end_time = datetime.now().isoformat()
+    end_event = {
+        'event_type': 'session_end',
+        'session_id': session_id,
+        'end_time': end_time
+    }
+    publish_message(channel, end_event)
+
+credentials = pika.PlainCredentials('usuario', 'contraseña')
+rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
 channel = rabbitmq_conn.channel()
-channel.queue_declare(queue='message_queue')
+channel.queue_declare(queue=QUEUE_NAME)
 
-# Define the message
-message = {"text": "Hello, this is a test message from the publisher!"}
+for _ in range(NUM_SESSIONS):
+    session_id, user_id = generate_id()
+    simulate_session(channel, session_id, user_id)
 
-# Publish the message to the queue
-channel.basic_publish(exchange='', routing_key='message_queue', body=json.dumps(message))
-
-print(" [x] Sent message:", message)
-
-# Close the RabbitMQ connection
 rabbitmq_conn.close()
