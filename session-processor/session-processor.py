@@ -18,7 +18,7 @@ collection = db["sessions"]
 credentials = pika.PlainCredentials('kaarlo', 'password1')
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
 channel = connection.channel()
-channel.queue_declare(queue=QUEUE_NAME, durable=True)
+channel.queue_declare(queue=QUEUE_NAME, durable=False)
 
 sessions_store = {}
 
