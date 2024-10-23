@@ -50,7 +50,7 @@ def simulate_session(channel, session_id, user_id):
 credentials = pika.PlainCredentials('kaarlo', 'password1')
 rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
 channel = rabbitmq_conn.channel()
-channel.queue_declare(queue=QUEUE_NAME)
+channel.queue_declare(queue=QUEUE_NAME, durable = True)
 
 for _ in range(NUM_SESSIONS):
     session_id, user_id = generate_id()
