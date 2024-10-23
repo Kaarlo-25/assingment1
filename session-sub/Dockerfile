@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY session-pub.py .
 
-RUN pip install pika
+RUN pip install --upgrade pip && pip install pika
 
 CMD ["python", "-u", "session-pub.py"]

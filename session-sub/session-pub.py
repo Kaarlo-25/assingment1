@@ -47,7 +47,7 @@ def simulate_session(channel, session_id, user_id):
     }
     publish_message(channel, end_event)
 
-credentials = pika.PlainCredentials('usuario', 'contraseña')
+credentials = pika.PlainCredentials('kaarlo', 'password1')
 rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
 channel = rabbitmq_conn.channel()
 channel.queue_declare(queue=QUEUE_NAME)

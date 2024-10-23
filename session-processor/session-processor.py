@@ -15,7 +15,8 @@ db = mongo_client[MONGO_DATABASE]
 collection = db["sessions"]
 
 # Connect to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER))
+credentials = pika.PlainCredentials('kaarlo', 'password1')
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
 channel = connection.channel()
 channel.queue_declare(queue=QUEUE_NAME, durable=True)
 

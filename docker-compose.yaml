@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   session-publisher:
+    container_name: session-pub
     build: 
       context: /root/assingment1/session-sub
       dockerfile: Dockerfile
@@ -12,8 +13,11 @@ services:
     depends_on:
       rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
         condition: service_healthy
+    networks:
+      - rabbitmq-network
 
   session-processor:
+    container_name: session-processor
     build: 
       context: /root/assingment1/session-processor
       dockerfile: Dockerfile
@@ -26,6 +30,9 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_started  # Verifica que MongoDB haya iniciado
+    networks:
+      - rabbitmq-network
+      - mongodb-network
 
   rabbitmq:
     image: rabbitmq:management
@@ -34,13 +41,15 @@ services:
       - "5672:5672"  # Puerto del protocolo AMQP
       - "15672:15672"  # Puerto para la interfaz de gestión
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: kaarlo       # Cambia esto a un nombre de usuario deseado
+      RABBITMQ_DEFAULT_PASS: password1
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - rabbitmq-network
 
   mongodb:
     image: mongo
@@ -58,6 +67,8 @@ services:
       interval: 30s  # Intervalo de tiempo entre cada verificación de estado.
       timeout: 10s  # Tiempo máximo que se espera para que el comando de verificación responda. Aquí es 10 segundos.
       retries: 5  # Número de intentos antes de marcar el servicio como no saludable.
+    networks:
+      - mongodb-network
 
   mongo-express:
     image: mongo-express
@@ -71,7 +82,15 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy  # Asegura que mongo-express solo se inicie cuando mongodb esté saludable.
+    networks:
+      - mongodb-network
 
 volumes:
   mongo-data:
     driver: local
+
+networks:
+  rabbitmq-network:  # Red para RabbitMQ
+    name: rabbitmq-network  # Especifica el nombre de la red
+  mongodb-network:  # Red para MongoDB
+    name: mongodb-network
