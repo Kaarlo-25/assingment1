@@ -10,7 +10,8 @@ services:
       SESSION_DELAY: 10
       AMQP_SERVER: rabbitmq
     depends_on:
-      - rabbitmq  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
+      rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
+        condition: service_healthy
 
   session-processor:
     build: 
@@ -21,8 +22,10 @@ services:
       MONGO_SERVER: mongodb
       MONGO_DATABASE: session_data
     depends_on:
-      - rabbitmq
-      - mongodb  # Asegura que MongoDB esté disponible antes de iniciar el procesador
+      rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
+        condition: service_healthy
+      mongodb:
+        condition: service_started  # Verifica que MongoDB haya iniciado
 
   rabbitmq:
     image: rabbitmq:management
@@ -33,6 +36,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   mongodb:
     image: mongo
@@ -47,9 +55,9 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: mypassword
     healthcheck:  # Define un mecanismo de verificación de estado para el contenedor.
       test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  # Ejecuta un comando de MongoDB que envía un ping para comprobar si la base de datos está disponible.
-      interval: 30s  # Intervalo de tiempo entre cada verificación de estado. 'TBC' indica que se debe definir el tiempo deseado (por ejemplo, '30s' para 30 segundos).
+      interval: 30s  # Intervalo de tiempo entre cada verificación de estado.
       timeout: 10s  # Tiempo máximo que se espera para que el comando de verificación responda. Aquí es 10 segundos.
-      retries: 5  
+      retries: 5  # Número de intentos antes de marcar el servicio como no saludable.
 
   mongo-express:
     image: mongo-express
@@ -62,8 +70,7 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: pass123
     depends_on:
       mongodb:
-        condition: service_healthy
-    restart: always
+        condition: service_healthy  # Asegura que mongo-express solo se inicie cuando mongodb esté saludable.
 
 volumes:
   mongo-data:

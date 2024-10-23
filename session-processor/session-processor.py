@@ -15,14 +15,14 @@ db = mongo_client[MONGO_DATABASE]
 collection = db["sessions"]
 
 # Connect to RabbitMQ
-rabbitmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER))
-channel = rabbitmq_conn.channel()
-channel.queue_declare(queue=QUEUE_NAME)
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER))
+channel = connection.channel()
+channel.queue_declare(queue=QUEUE_NAME, durable=True)
 
-ongoing_sessions = {}
+sessions_store = {}
 
 # Callback function to handle messages
-def callback(ch, method, properties, body):
+def callback(body):
     message = json.loads(body)
     session_id = message['session_id']
     event_type = message['event_type']
@@ -30,14 +30,14 @@ def callback(ch, method, properties, body):
     if event_type == 'session_start':
         # Store session start info
         start_time = message['start_time']
-        ongoing_sessions[session_id] = {'start_time': start_time}
+        sessions_store[session_id] = {'start_time': start_time}
         print(f"Session started: {session_id} at {start_time}")
     
     elif event_type == 'session_end':
         # Check if we have the session start info
-        if session_id in ongoing_sessions:
+        if session_id in sessions_store:
             end_time = message['end_time']
-            start_time = ongoing_sessions[session_id]['start_time']
+            start_time = sessions_store[session_id]['start_time']
 
             # Calculate session duration
             start_dt = datetime.fromisoformat(start_time)
@@ -53,8 +53,8 @@ def callback(ch, method, properties, body):
             }
             collection.insert_one(session_data)
 
-            # Remove the session from ongoing_sessions
-            del ongoing_sessions[session_id]
+            # Remove the session from sessions_store
+            del sessions_store[session_id]
             print(f"Session ended: {session_id} at {end_time}, duration: {duration} seconds")
         else:
             print(f"Received end event for unknown session: {session_id}")

@@ -11,4 +11,4 @@ COPY session-processor.py .
 RUN pip install pika pymongo
 
 # Ejecuta el script y asegúrate de que los logs se muestran en tiempo real (sin buffering)
-CMD ["python", "-u", "session_processor.py"]
+CMD ["python", "-u", "session-processor.py"]
