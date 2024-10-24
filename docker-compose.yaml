@@ -13,6 +13,7 @@ services:
     depends_on:
       rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
         condition: service_healthy
+    restart: always
     networks:
       - rabbitmq-network
 
@@ -82,6 +83,7 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy  # Asegura que mongo-express solo se inicie cuando mongodb esté saludable.
+    restart: always
     networks:
       - mongodb-network
 
