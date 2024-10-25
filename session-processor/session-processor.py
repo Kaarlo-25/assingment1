@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 import pika
 import pymongo
@@ -10,21 +10,19 @@ MONGO_SERVER = os.getenv('MONGO_SERVER')
 MONGO_DATABASE = os.getenv('MONGO_DATABASE')
 
 # Connect to MongoDB
-mongo_client = pymongo.MongoClient(f"mongodb://{MONGO_SERVER}:27017/") # In the assignement it is necessary to specify the user (root), and the password (password)
+mongo_client = pymongo.MongoClient(f"mongodb://root:mypassword@{MONGO_SERVER}:27017/") # In the assignement it is necessary to specify the user (root), and the password (password)
 db = mongo_client[MONGO_DATABASE]
 collection = db["sessions"]
 
 # Connect to RabbitMQ
-credentials = pika.PlainCredentials('kaarlo', 'password1')
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER, credentials=credentials))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=AMQP_SERVER))
 channel = connection.channel()
-
-channel.queue_declare(queue=QUEUE_NAME, durable=False)
+channel.queue_declare(queue=QUEUE_NAME)
 
 sessions_store = {}
 
 # Callback function to handle messages
-def callback(body):
+def callback(ch, method, properties, body):
     message = json.loads(body)
     session_id = message['session_id']
     event_type = message['event_type']
