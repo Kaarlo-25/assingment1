@@ -79,8 +79,8 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: mypassword      
       ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/session_data
-#      ME_CONFIG_BASICAUTH_USERNAME: admin
-#      ME_CONFIG_BASICAUTH_PASSWORD: pass123
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass123
     depends_on:
       mongodb:
         condition: service_healthy  # Asegura que mongo-express solo se inicie cuando mongodb esté saludable.
