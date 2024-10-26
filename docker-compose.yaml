@@ -11,7 +11,7 @@ services:
       SESSION_DELAY: 10
       AMQP_SERVER: rabbitmq
     depends_on:
-      rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
+      rabbitmq:  
         condition: service_healthy
     restart: always
     networks:
@@ -27,10 +27,10 @@ services:
       MONGO_SERVER: mongodb
       MONGO_DATABASE: session_data
     depends_on:
-      rabbitmq:  # Asegura que RabbitMQ esté disponible antes de iniciar el publicador
+      rabbitmq:  
         condition: service_healthy
       mongodb:
-        condition: service_healthy  # Verifica que MongoDB haya iniciado
+        condition: service_healthy  
     restart: always
     networks:
       - rabbitmq-network
@@ -40,10 +40,10 @@ services:
     image: rabbitmq:management
     container_name: rabbitmq
     ports:
-      - "5672:5672"  # Puerto del protocolo AMQP
-      - "15672:15672"  # Puerto para la interfaz de gestión
+      - "5672:5672"  
+      - "15672:15672"  
     environment:
-      RABBITMQ_DEFAULT_USER: guest       # Cambia esto a un nombre de usuario deseado
+      RABBITMQ_DEFAULT_USER: guest      
       RABBITMQ_DEFAULT_PASS: guest
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
@@ -63,13 +63,11 @@ services:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_DATABASE: session_data
-#      MONGO_INITDB_ROOT_USERNAME: root
-#      MONGO_INITDB_ROOT_PASSWORD: mypassword
-    healthcheck:  # Define un mecanismo de verificación de estado para el contenedor.
-      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  # Ejecuta un comando de MongoDB que envía un ping para comprobar si la base de datos está disponible.
-      interval: 30s  # Intervalo de tiempo entre cada verificación de estado.
-      timeout: 10s  # Tiempo máximo que se espera para que el comando de verificación responda. Aquí es 10 segundos.
-      retries: 5  # Número de intentos antes de marcar el servicio como no saludable.
+    healthcheck:  
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  
+      interval: 30s  
+      timeout: 10s  
+      retries: 5  
     restart: always
     networks:
       - mongodb-network
@@ -80,14 +78,10 @@ services:
     ports:
       - "8081:8081"
     environment:
- #     ME_CONFIG_MONGODB_ADMINUSERNAME: root
- #     ME_CONFIG_MONGODB_ADMINPASSWORD: mypassword
       ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/session_data
-#      ME_CONFIG_BASICAUTH_USERNAME: admin
-#      ME_CONFIG_BASICAUTH_PASSWORD: pass123
     depends_on:
       mongodb:
-        condition: service_healthy  # Asegura que mongo-express solo se inicie cuando mongodb esté saludable.
+        condition: service_healthy  
     networks:
       - mongodb-network
 
@@ -96,9 +90,9 @@ volumes:
     driver: local
 
 networks:
-  rabbitmq-network:  # Red para RabbitMQ
-    name: rabbitmq-network  # Especifica el nombre de la red
+  rabbitmq-network:  
+    name: rabbitmq-network  
     driver: bridge
-  mongodb-network:  # Red para MongoDB
+  mongodb-network:  
     name: mongodb-network
     driver: bridge

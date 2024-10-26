@@ -25,7 +25,6 @@ def publish_message(channel, message):
     print(f"Published: {message}")
 
 def simulate_session(channel, session_id, user_id):
-    # Start session event
     start_time = datetime.now().isoformat()
     start_event = {
         'event_type': 'session_start',
@@ -38,7 +37,6 @@ def simulate_session(channel, session_id, user_id):
     session_duration = random.randint(1, DELAY)
     time.sleep(session_duration)
     
-    # End session event
     end_time = datetime.now().isoformat()
     end_event = {
         'event_type': 'session_end',
@@ -56,7 +54,3 @@ for _ in range(NUM_SESSIONS):
     simulate_session(channel, session_id, user_id)
 
 rabbitmq_conn.close()
-
-
-# TODO dont use credentials for the rabbitmq
-# TODO correct path
