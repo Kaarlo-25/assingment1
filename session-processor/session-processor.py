@@ -9,7 +9,7 @@ AMQP_SERVER = os.getenv('AMQP_SERVER')
 MONGO_SERVER = os.getenv('MONGO_SERVER')
 MONGO_DATABASE = os.getenv('MONGO_DATABASE')
 
-mongo_client = pymongo.MongoClient(f"mongodb://root:mypassword@{MONGO_SERVER}:27017/") 
+mongo_client = pymongo.MongoClient(f"mongodb://{MONGO_SERVER}:27017/") 
 db = mongo_client[MONGO_DATABASE]
 collection = db["sessions"]
 

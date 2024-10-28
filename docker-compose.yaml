@@ -60,8 +60,6 @@ services:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_DATABASE: session_data
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: mypassword
     healthcheck:  
       test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  
       interval: 30s  
