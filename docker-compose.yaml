@@ -13,7 +13,6 @@ services:
     depends_on:
       rabbitmq:  
         condition: service_healthy
-    restart: always
     networks:
       - rabbitmq-network
 
@@ -31,7 +30,6 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy  
-    restart: always
     networks:
       - rabbitmq-network
       - mongodb-network
@@ -50,7 +48,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-    restart: always
     networks:
       - rabbitmq-network
 
@@ -63,12 +60,13 @@ services:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_DATABASE: session_data
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mypassword
     healthcheck:  
       test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 })'"]  
       interval: 30s  
       timeout: 10s  
       retries: 5  
-    restart: always
     networks:
       - mongodb-network
 
